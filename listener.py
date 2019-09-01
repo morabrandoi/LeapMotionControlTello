@@ -71,83 +71,83 @@ class SampleListener(Leap.Listener):
                 print("finna land")
                 self.in_flight = False
                 # put in drone landing conidiional based on sphere
-            if (not self.in_flight) and (hand.palm_normal.y > 0) and (time.time() - self.last_time["take off"] > 1):
+            if (hand.palm_normal.y > 0) and (time.time() - self.last_time["take off"] > 1):
                 print("checkppiunt3")
                 self.drone.takeoff()
                 self.last_time["take off"] = time.time()
                 self.in_flight = True
             
             # time limiting
-            if time.time() - self.last_time["motion update"] > 0.5:
-                self.last_time["motion update"] = time.time()
+            # if time.time() - self.last_time["motion update"] > 0.5:
+            #     self.last_time["motion update"] = time.time()
                 
-                #update z
-                z_dead_min, z_dead_max = -70, 70
-                z_min, z_max = -200, 200
+            #update z
+            z_dead_min, z_dead_max = -70, 70
+            z_min, z_max = -200, 200
 
-                if z_dead_min <= palm_z <= z_dead_max:
-                    self.drone.forward(0)
+            if z_dead_min <= palm_z <= z_dead_max:
+                self.drone.forward(0)
+            else:
+                #clip z position to standard range
+                clip_z = max(z_min, min(palm_z, z_max))
+                # mapping speed palm z position to drone speed
+                z_speed = (int)(100 * (abs(clip_z) - z_dead_max) / (z_max - z_dead_max))
+                if palm_z < 0:
+                    self.drone.forward(z_speed)
                 else:
-                    #clip z position to standard range
-                    clip_z = max(z_min, min(palm_z, z_max))
-                    # mapping speed palm z position to drone speed
-                    z_speed = (int)(100 * (abs(clip_z) - z_dead_max) / (z_max - z_dead_max))
-                    if palm_z < 0:
-                        self.drone.forward(z_speed)
-                    else:
-                        self.drone.backward(z_speed)
+                    self.drone.backward(z_speed)
 
-                # update x
-                x_dead_min, x_dead_max = -60, 60
-                x_min, x_max = -250, 250
+            # update x
+            x_dead_min, x_dead_max = -60, 60
+            x_min, x_max = -250, 250
 
-                if x_dead_min <= palm_x <= x_dead_max:
-                    self.drone.left(0)
+            if x_dead_min <= palm_x <= x_dead_max:
+                self.drone.left(0)
+            else:
+                #clip x position to standard range
+                clip_x = max(x_min, min(palm_x, x_max))
+                # mapping speed palm x position to drone speed
+                x_speed = (int)(100 * (abs(clip_x) - x_dead_max) / (x_max - x_dead_max))
+                if palm_x < 0:
+                    self.drone.left(x_speed)
                 else:
-                    #clip x position to standard range
-                    clip_x = max(x_min, min(palm_x, x_max))
-                    # mapping speed palm x position to drone speed
-                    x_speed = (int)(100 * (abs(clip_x) - x_dead_max) / (x_max - x_dead_max))
-                    if palm_x < 0:
-                        self.drone.left(x_speed)
-                    else:
-                        self.drone.right(x_speed)
- 
+                    self.drone.right(x_speed)
 
-                # update y
-                # note: mapping pos to throttle speed is different mathematically since position ranges are asymetric
-                y_dead_min, y_dead_max = 175, 275
-                y_min, y_max = 80, 400
 
-                if y_dead_min <= palm_y <= y_dead_max:
-                    self.drone.set_throttle(0)
+            # update y
+            # note: mapping pos to throttle speed is different mathematically since position ranges are asymetric
+            y_dead_min, y_dead_max = 175, 275
+            y_min, y_max = 80, 400
+
+            if y_dead_min <= palm_y <= y_dead_max:
+                self.drone.set_throttle(0)
+            else:
+                # negator = 1 if palm_y > (y_dead_max + y_dead_min) / 2 else: -1
+                #clip y position to standard range
+                clip_y = max(y_min, min(palm_y, y_max))
+                # mapping speed palm y position to drone speed
+                if palm_y < (y_dead_max + y_dead_min) / 2: # if y pos is less than "middle"
+                    y_speed = (int)(-100 * (clip_y - y_dead_min) / (y_min - y_dead_min) )
                 else:
-                    # negator = 1 if palm_y > (y_dead_max + y_dead_min) / 2 else: -1
-                    #clip y position to standard range
-                    clip_y = max(y_min, min(palm_y, y_max))
-                    # mapping speed palm y position to drone speed
-                    if palm_y < (y_dead_max + y_dead_min) / 2: # if y pos is less than "middle"
-                        y_speed = (int)(-100 * (clip_y - y_dead_min) / (y_min - y_dead_min) )
-                    else:
-                        y_speed = (int)(100 * (clip_y - y_dead_max) / (y_max - y_dead_max) )
+                    y_speed = (int)(100 * (clip_y - y_dead_max) / (y_max - y_dead_max) )
 
-                    self.drone.set_throttle(y_speed)
+                self.drone.set_throttle(y_speed)
 
-                # update yaw
-                yaw_dead_min, yaw_dead_max = -40, 40
-                yaw_min, yaw_max = -80, 80
+            # update yaw
+            yaw_dead_min, yaw_dead_max = -30, 30
+            yaw_min, yaw_max = -80, 80
 
-                if yaw_dead_min <= hand_yaw <= yaw_dead_max:
-                    self.drone.clockwise(0)
+            if yaw_dead_min <= hand_yaw <= yaw_dead_max:
+                self.drone.clockwise(0)
+            else:
+                #clip yaw position to standard range
+                clip_yaw = max(yaw_min, min(hand_yaw, yaw_max))
+                # mapping speed palm yaw position to drone speed
+                yaw_speed = (int)(100 * (abs(clip_yaw) - yaw_dead_max) / (yaw_max - yaw_dead_max))
+                if hand_yaw < 0:
+                    self.drone.counter_clockwise(yaw_speed)
                 else:
-                    #clip yaw position to standard range
-                    clip_yaw = max(yaw_min, min(hand_yaw, yaw_max))
-                    # mapping speed palm yaw position to drone speed
-                    yaw_speed = (int)(100 * (abs(clip_yaw) - yaw_dead_max) / (yaw_max - yaw_dead_max))
-                    if hand_yaw < 0:
-                        self.drone.counterclockwise(yaw_speed)
-                    else:
-                        self.drone.clockwise(yaw_speed)
+                    self.drone.clockwise(yaw_speed)
 
         for hand in frame.hands:
 
@@ -161,28 +161,16 @@ class SampleListener(Leap.Listener):
             # print "  %s, id %d, position: %s" % (
             #     handType, hand.id, hand.palm_position)
 
-                        # we dont need z
-
-            x = hand.palm_position[0]
-            y = hand.palm_position[1]
-            z = hand.palm_position[2]
-
-            print("hand type: " + handType)
-            print("x: %f , y: %f , z: %f " % (x,y,z))
+                        # we dont need
+            
 
             # Get the hand's normal vector and direction
             normal = hand.palm_normal
             direction = hand.direction
-            print("normal: ", normal.x, normal.y, normal.z)
-            print("direction: ", direction.x, direction.y, direction.z)
-            print("sphere radius", hand.sphere_radius)
             
 
             # Calculate the hand's pitch, roll, and yaw angles
-            print "  pitch: %f degrees, roll: %f degrees, yaw: %f degrees" % (
-                direction.pitch * Leap.RAD_TO_DEG,
-                normal.roll * Leap.RAD_TO_DEG,
-                direction.yaw * Leap.RAD_TO_DEG)
+            
 
             # Get arm bone
             # arm = hand.arm
